@@ -1,0 +1,81 @@
+# Changelog
+
+All notable changes to nas-cleanup-manager are documented in this file.
+
+## [Unreleased]
+
+### Changed
+
+- The texts of the interface, in Italian and English, are impersonal and shorter: no ellipsis,
+  colon or semicolon, no names of internal programs, commands or variables.
+- The scrollbars come from the shared library, which shows only their thumb: no arrows and no
+  track.
+- The items to clean, the groups, the scheduled cleanups and the settings use the switch of the
+  shared library; a group partly taken shows its switch half way and how many items it takes. The
+  form fields have a name.
+- The two numbers of the settings use the stepper of the library, narrower, and the settings
+  window sits inside the layout of the app, so its buttons are spaced and on the right.
+- The settings button of the sidebar has the classic gear.
+- Loading uses the spinner of the library; an empty schedule and an empty history show a sign, a
+  title and a short description.
+- A delicate item shows a warning with its sign, in the tree, in the details and in the
+  confirmation, which lists the delicate items taken. The preview and confirm buttons have icons.
+- The detail label "Cosa tocca" is now "Componente", and the descriptions of the items are
+  clearer.
+- Only the body of a window scrolls: title and buttons stay in place. The window of a scheduled
+  cleanup has a shorter title and a narrower name field.
+- The frame and the badge of an empty schedule or history are `.nas_empty_framed` and
+  `.nas_empty_badge` of the shared library, the same rules as before.
+
+### Fixed
+
+- The bar of the system disk was empty and its legend had no colours in the build: PurgeCSS
+  removed the classes named at runtime, now kept.
+
+### Removed
+
+- The unused text `appName` and type `Group`.
+
+## [0.1.2]
+
+### Changed
+
+- Maintenance release.
+
+## [0.1.1]
+
+### Fixed
+
+- Complete the asynchronous selection mock in the application component test.
+- On a NAS whose time zone is UTC the scheduled rules had no next run: systemd-analyze writes no
+  `(in UTC)` line there, and its `Next elapse` is now read instead. The list showed "-" and the
+  rules never started.
+
+### Added
+
+- The trashes of the applications (the Explorer's, from the `trash` capability) in a group of
+  their own, delicate: never chosen by default, and saying that what they hold is lost for good.
+  They do not count among the caches of the overview.
+
+### Changed
+
+- The launcher bridge, the shared styles, the layout with its sidebar, the native dialog under
+  `CommonModal`, `formatBytes`, the schedule texts and the build, package and release scripts come
+  from the shared library `@valeriogc/nas-base-app`.
+
+## [0.1.0]
+
+### Added
+
+- The Cleanup app: an overview of the system disk by category (system, apps, caches, logs,
+  downloaded packages, temporary files, free) with the data disks read only and the last cleanup;
+  a tree of check boxes in groups (APT, kernel, logs, temporary files, NAS, app caches) with a
+  preview that deletes nothing, a detail of each item and a confirmed cleanup shown among the
+  operations of the NAS; scheduled cleanups with their own items; the history of the cleanups;
+  settings for the age of temporary files, the size of the journal and the notification at the
+  end (never a mail).
+- Delicate items (orphan packages, leftover configurations, old kernels) are never chosen by
+  default and say why when ticked. The choice of the page is kept for the next time.
+- The manifest asks for `permissions.cleanup`: the system items are done by the launcher's root
+  helper from a fixed list, the caches through the `cache` capability of the applications. The app
+  runs in background only while a scheduled cleanup is on.
