@@ -30,8 +30,8 @@ function named(id: string) {
 onMounted(async () => {
   try {
     [cleanups.value, entries.value] = await Promise.all([fetchHistory(), fetchCatalog()]);
-  } catch (failure) {
-    error.value = failure instanceof Error ? failure.message : t.value.loadFailed;
+  } catch (error_) {
+    error.value = error_ instanceof Error ? error_.message : t.value.loadFailed;
   } finally {
     loading.value = false;
   }

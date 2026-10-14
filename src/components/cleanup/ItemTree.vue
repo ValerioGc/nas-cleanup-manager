@@ -71,7 +71,8 @@ function size(id: string) {
 </script>
 
 <template>
-  <div class="item_tree" role="group" :aria-label="label">
+  <fieldset class="item_tree">
+    <legend class="visually_hidden">{{ label }}</legend>
     <section v-for="{ group, members } in groups" :key="group" class="tree_group">
       <div class="group_row">
         <button
@@ -138,6 +139,7 @@ function size(id: string) {
                 role="switch"
                 :name="`item_${entry.id}`"
                 :checked="selected.includes(entry.id)"
+                :aria-checked="selected.includes(entry.id)"
                 :disabled="disabled"
                 :data-testid="`item_${entry.id}`"
                 @change="toggleItem(entry.id)"
@@ -178,7 +180,7 @@ function size(id: string) {
         </li>
       </ul>
     </section>
-  </div>
+  </fieldset>
 </template>
 
 <style scoped lang="scss">
@@ -186,6 +188,10 @@ function size(id: string) {
 .item_tree {
   display: grid;
   gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 .tree_group {

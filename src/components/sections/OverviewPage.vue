@@ -33,7 +33,13 @@ const parts = computed(() => {
     }
     return counted.get(category) ?? 0;
   };
-  return CATEGORIES.map((id) => ({ id, bytes: bytes(id), percent: share(bytes(id), value.total) }));
+  let offset = 0;
+  return CATEGORIES.map((id) => {
+    const percent = share(bytes(id), value.total);
+    const part = { id, bytes: bytes(id), percent, offset };
+    offset += percent;
+    return part;
+  });
 });
 
 const last = computed(() => {
@@ -55,8 +61,8 @@ async function load() {
   error.value = null;
   try {
     overview.value = await fetchOverview();
-  } catch (failure) {
-    error.value = failure instanceof Error ? failure.message : t.value.loadFailed;
+  } catch (error_) {
+    error.value = error_ instanceof Error ? error_.message : t.value.loadFailed;
   } finally {
     loading.value = false;
   }
@@ -88,15 +94,26 @@ onMounted(load);
               .replace('{total}', formatBytes(overview.total, locale))
           }}
         </p>
-        <div class="disk_bar" role="img" :aria-label="t.overview.systemDisk">
-          <span
+        <svg
+          class="disk_bar"
+          role="img"
+          :aria-label="t.overview.systemDisk"
+          viewBox="0 0 100 18"
+          preserveAspectRatio="none"
+        >
+          <rect
             v-for="part in parts"
             :key="part.id"
             :class="['disk_part', `disk_part_${part.id}`]"
-            :style="{ width: `${part.percent}%` }"
-            :title="`${t.overview.categories[part.id]} ${formatBytes(part.bytes, locale)}`"
-          ></span>
-        </div>
+            :x="part.offset"
+            :width="part.percent"
+            height="18"
+          >
+            <title>
+              {{ t.overview.categories[part.id] }} {{ formatBytes(part.bytes, locale) }}
+            </title>
+          </rect>
+        </svg>
         <ul class="legend">
           <li v-for="part in parts" :key="part.id" :data-testid="`category_${part.id}`">
             <span :class="['legend_dot', `disk_part_${part.id}`]" aria-hidden="true"></span>
@@ -158,7 +175,8 @@ onMounted(load);
 }
 
 .disk_bar {
-  display: flex;
+  display: block;
+  width: 100%;
   height: 18px;
   margin: 12px 0;
   overflow: hidden;
@@ -166,36 +184,38 @@ onMounted(load);
   background: var(--nas-sunken);
 }
 
-.disk_part {
-  height: 100%;
+.disk_part,
+.legend_dot {
+  background: var(--disk-part-color);
+  fill: var(--disk-part-color);
 }
 
 .disk_part_system {
-  background: #5b7a99;
+  --disk-part-color: #5b7a99;
 }
 
 .disk_part_apps {
-  background: #3c8fbe;
+  --disk-part-color: #3c8fbe;
 }
 
 .disk_part_caches {
-  background: #8e6cc0;
+  --disk-part-color: #8e6cc0;
 }
 
 .disk_part_logs {
-  background: #c9752e;
+  --disk-part-color: #c9752e;
 }
 
 .disk_part_packages {
-  background: #d4a72c;
+  --disk-part-color: #d4a72c;
 }
 
 .disk_part_temporary {
-  background: #c25b78;
+  --disk-part-color: #c25b78;
 }
 
 .disk_part_free {
-  background: var(--nas-sunken);
+  --disk-part-color: var(--nas-sunken);
 }
 
 .legend {

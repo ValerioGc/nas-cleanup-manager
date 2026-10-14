@@ -29,8 +29,8 @@ watch(
     error.value = null;
     try {
       draft.value = await fetchSettings();
-    } catch (failure) {
-      error.value = reason(failure);
+    } catch (error_) {
+      error.value = reason(error_);
     }
   },
   { immediate: true },
@@ -44,8 +44,8 @@ async function submit() {
   try {
     await saveSettings(draft.value);
     open.value = false;
-  } catch (failure) {
-    error.value = reason(failure);
+  } catch (error_) {
+    error.value = reason(error_);
   } finally {
     saving.value = false;
   }

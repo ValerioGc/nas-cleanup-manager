@@ -70,8 +70,8 @@ async function load() {
     active.value = catalog[0]?.id ?? null;
     loaded = true;
     follow(current);
-  } catch (failure) {
-    error.value = reason(failure);
+  } catch (error_) {
+    error.value = reason(error_);
   } finally {
     loading.value = false;
   }
@@ -80,7 +80,7 @@ async function load() {
 // The choice is kept for the next time.
 watch(selected, (items) => {
   if (loaded) {
-    saveSelection(items).catch((failure: unknown) => (error.value = reason(failure)));
+    saveSelection(items).catch((error_: unknown) => (error.value = reason(error_)));
   }
 });
 
@@ -94,8 +94,8 @@ async function preview() {
   try {
     const measuredItems = await previewItems(selected.value);
     results.value = Object.fromEntries(measuredItems.map((result) => [result.id, result]));
-  } catch (failure) {
-    error.value = reason(failure);
+  } catch (error_) {
+    error.value = reason(error_);
   } finally {
     previewing.value = false;
   }
@@ -110,7 +110,7 @@ function follow(current: Progress) {
     timer = setTimeout(() => {
       fetchProgress()
         .then(follow)
-        .catch((failure: unknown) => (error.value = reason(failure)));
+        .catch((error_: unknown) => (error.value = reason(error_)));
     }, PROGRESS_MS);
   } else if (wasRunning) {
     void finished();
@@ -145,8 +145,8 @@ async function clean() {
       total: selected.value.length,
     };
     follow(await fetchProgress());
-  } catch (failure) {
-    error.value = reason(failure);
+  } catch (error_) {
+    error.value = reason(error_);
   }
 }
 
@@ -163,15 +163,10 @@ onBeforeUnmount(() => clearTimeout(timer));
     </header>
     <NasLoading v-if="loading" :label="t.loading" />
     <p v-if="error" class="app_error page_error" role="alert">{{ error }}</p>
-    <p v-if="outcome" class="page_outcome" role="status" data-testid="cleanup_outcome">
+    <output v-if="outcome" class="page_outcome" data-testid="cleanup_outcome">
       {{ outcome }}
-    </p>
-    <div
-      v-if="running && progress"
-      class="page_progress"
-      role="status"
-      data-testid="cleanup_progress"
-    >
+    </output>
+    <output v-if="running && progress" class="page_progress" data-testid="cleanup_progress">
       <span>
         {{
           t.cleanup.running
@@ -180,7 +175,7 @@ onBeforeUnmount(() => clearTimeout(timer));
         }}
       </span>
       <progress :max="progress.total" :value="progress.done"></progress>
-    </div>
+    </output>
     <div v-if="!loading && entries.length" class="cleanup_layout">
       <ItemTree
         v-model="selected"

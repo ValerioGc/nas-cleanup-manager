@@ -46,8 +46,8 @@ function next(rule: CleanupRule) {
 async function load() {
   try {
     [rules.value, entries.value] = await Promise.all([fetchRules(), fetchCatalog()]);
-  } catch (failure) {
-    error.value = reason(failure);
+  } catch (error_) {
+    error.value = reason(error_);
   } finally {
     loading.value = false;
   }
@@ -57,8 +57,8 @@ async function act(action: () => Promise<unknown>) {
   error.value = null;
   try {
     await action();
-  } catch (failure) {
-    error.value = reason(failure);
+  } catch (error_) {
+    error.value = reason(error_);
   }
   await load();
 }
@@ -152,6 +152,7 @@ onMounted(load);
                   role="switch"
                   :name="`rule_switch_${rule.id}`"
                   :checked="rule.enabled"
+                  :aria-checked="rule.enabled"
                   :aria-label="`${t.schedule.enabled}: ${rule.name}`"
                   :data-testid="`rule_switch_${rule.id}`"
                   @change="act(() => saveRule({ ...rule, enabled: !rule.enabled }))"

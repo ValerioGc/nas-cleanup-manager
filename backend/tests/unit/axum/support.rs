@@ -13,7 +13,7 @@ use std::{
 };
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
-    net::UnixListener,
+    net::{UnixListener, UnixStream},
 };
 
 pub async fn database() -> SqlitePool {
@@ -99,6 +99,45 @@ fn answer(line: &str, body: &Value) -> (u16, Value) {
     }
 }
 
+/// Reads the request head and the body announced by its content length.
+async fn read_request(stream: &mut UnixStream) -> Option<(String, Value)> {
+    let mut raw = Vec::new();
+    let mut buffer = [0; 4096];
+    // The head, then as much body as it announces.
+    let (head, length) = loop {
+        let read = stream.read(&mut buffer).await.unwrap_or(0);
+        if read == 0 {
+            return None;
+        }
+        raw.extend_from_slice(&buffer[..read]);
+        if let Some(end) = raw.windows(4).position(|window| window == b"\r\n\r\n") {
+            let head = String::from_utf8_lossy(&raw[..end]).into_owned();
+            let length = head
+                .lines()
+                .find_map(|line| line.strip_prefix("Content-Length: "))
+                .and_then(|length| length.trim().parse::<usize>().ok())
+                .unwrap_or(0);
+            raw.drain(..end + 4);
+            break (head, length);
+        }
+    };
+    while raw.len() < length {
+        let read = stream.read(&mut buffer).await.unwrap_or(0);
+        if read == 0 {
+            break;
+        }
+        raw.extend_from_slice(&buffer[..read]);
+    }
+    let line = head
+        .lines()
+        .next()
+        .unwrap_or_default()
+        .trim_end_matches(" HTTP/1.1")
+        .to_owned();
+    let body: Value = serde_json::from_slice(&raw).unwrap_or(Value::Null);
+    Some((line, body))
+}
+
 pub async fn fake_launcher() -> FakeLauncher {
     static NEXT: AtomicU64 = AtomicU64::new(0);
     let socket = std::env::temp_dir().join(format!(
@@ -120,40 +159,9 @@ pub async fn fake_launcher() -> FakeLauncher {
             };
             let requests = Arc::clone(&requests);
             tokio::spawn(async move {
-                let mut raw = Vec::new();
-                let mut buffer = [0; 4096];
-                // The head, then as much body as it announces.
-                let (head, length) = loop {
-                    let read = stream.read(&mut buffer).await.unwrap_or(0);
-                    if read == 0 {
-                        return;
-                    }
-                    raw.extend_from_slice(&buffer[..read]);
-                    if let Some(end) = raw.windows(4).position(|window| window == b"\r\n\r\n") {
-                        let head = String::from_utf8_lossy(&raw[..end]).into_owned();
-                        let length = head
-                            .lines()
-                            .find_map(|line| line.strip_prefix("Content-Length: "))
-                            .and_then(|length| length.trim().parse::<usize>().ok())
-                            .unwrap_or(0);
-                        raw.drain(..end + 4);
-                        break (head, length);
-                    }
+                let Some((line, body)) = read_request(&mut stream).await else {
+                    return;
                 };
-                while raw.len() < length {
-                    let read = stream.read(&mut buffer).await.unwrap_or(0);
-                    if read == 0 {
-                        break;
-                    }
-                    raw.extend_from_slice(&buffer[..read]);
-                }
-                let line = head
-                    .lines()
-                    .next()
-                    .unwrap_or_default()
-                    .trim_end_matches(" HTTP/1.1")
-                    .to_owned();
-                let body: Value = serde_json::from_slice(&raw).unwrap_or(Value::Null);
                 let (status, reply) = answer(&line, &body);
                 requests.lock().expect("requests").push((line, body));
                 let reply = if reply.is_null() {
