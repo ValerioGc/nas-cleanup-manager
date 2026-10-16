@@ -2,6 +2,14 @@
 
 All notable changes to nas-cleanup-manager are documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- In the cleanup only the list of the items scrolls: the details beside it and the Preview and
+  Clean up buttons stay in view. On a narrow window the page scrolls as a whole.
+- The note of a delicate item is titled "Attenzione".
+
 ## [0.1.4]
 
 ### Changed

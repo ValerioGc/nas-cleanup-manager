@@ -108,6 +108,7 @@ export const it = {
     },
   },
   risky: 'Voce delicata',
+  riskyTitle: 'Attenzione',
   riskyNotes: {
     'apt-orphans':
       'Non più richiesti dal sistema, ma possono servire a programmi installati manualmente. L’anteprima mostra l’elenco completo prima della rimozione.',

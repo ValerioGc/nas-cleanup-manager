@@ -110,6 +110,7 @@ export const en: typeof it = {
     },
   },
   risky: 'Delicate item',
+  riskyTitle: 'Warning',
   riskyNotes: {
     'apt-orphans':
       'No longer required by the system, but programs installed by hand may use them. The preview shows the full list before the removal.',

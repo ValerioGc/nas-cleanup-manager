@@ -194,7 +194,7 @@ onBeforeUnmount(() => clearTimeout(timer));
         <p v-if="shown.risky" class="alert_warning detail_risky" role="note">
           <img class="app_icon" :src="warning" alt="" aria-hidden="true" />
           <span>
-            <strong>{{ t.risky }}</strong>
+            <strong>{{ t.riskyTitle }}</strong>
             {{ riskyNote(t, shown) }}
           </span>
         </p>
@@ -286,22 +286,35 @@ onBeforeUnmount(() => clearTimeout(timer));
 <style scoped lang="scss">
 
 .cleanup_page {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
+  height: 100%;
 }
 
+// Only the list scrolls, between the header and the buttons, beside the details.
 .cleanup_layout {
   display: grid;
+  flex: 1;
   grid-template-columns: minmax(0, 1.2fr) minmax(260px, 1fr);
-  align-items: start;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
   gap: 18px;
+
+  > .item_tree {
+    min-height: 0;
+    padding-right: 4px;
+    overflow-y: auto;
+    align-content: start;
+  }
 }
 
 .item_detail {
   --app-icon-size: 18px;
-  position: sticky;
-  top: 16px;
+  align-self: start;
+  max-height: 100%;
   padding: 18px 20px;
+  overflow-y: auto;
 
   h2 {
     display: flex;
@@ -386,13 +399,24 @@ onBeforeUnmount(() => clearTimeout(timer));
   font-weight: 600;
 }
 
+// One column: the page scrolls as a whole, the details under the list.
 @media (max-width: 900px) {
+  .cleanup_page {
+    height: auto;
+  }
+
   .cleanup_layout {
+    flex: none;
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+
+    > .item_tree {
+      overflow-y: visible;
+    }
   }
 
   .item_detail {
-    position: static;
+    max-height: none;
   }
 }
 

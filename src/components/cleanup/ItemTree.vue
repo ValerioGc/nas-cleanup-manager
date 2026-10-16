@@ -173,7 +173,7 @@ function size(id: string) {
           >
             <img class="app_icon" :src="warning" alt="" aria-hidden="true" />
             <span>
-              <strong>{{ t.risky }}</strong>
+              <strong>{{ t.riskyTitle }}</strong>
               {{ riskyNote(t, entry) }}
             </span>
           </p>

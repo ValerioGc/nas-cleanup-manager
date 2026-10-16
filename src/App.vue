@@ -31,7 +31,13 @@ const sections = computed<NasCategory<SectionCode>[]>(() =>
 </script>
 
 <template>
-  <NasAppLayout v-model="section" :categories="sections" :navigation-label="t.sectionsLabel">
+  <!-- The cleanup scrolls only its list: the details and the buttons stay in view. -->
+  <NasAppLayout
+    v-model="section"
+    :categories="sections"
+    :navigation-label="t.sectionsLabel"
+    :contained="section === 'cleanup'"
+  >
     <template #icon="{ category }">
       <img class="app_icon category_icon" :src="category.icon" alt="" aria-hidden="true" />
     </template>

@@ -36,9 +36,12 @@ it('opens on the overview and moves between the sections and the settings', asyn
     'Impostazioni',
   ]);
   expect(wrapper.get('h1').text()).toBe('Panoramica');
+  expect(wrapper.find('.app_contained').exists()).toBe(false);
   await wrapper.get('[data-testid="go_cleanup"]').trigger('click');
   await flushPromises();
   expect(wrapper.get('h1').text()).toBe('Pulizia');
+  // The cleanup scrolls inside the window, its buttons always in view.
+  expect(wrapper.find('.app_contained').exists()).toBe(true);
   expect(wrapper.get('[data-testid="section_cleanup"]').attributes('aria-pressed')).toBe('true');
   for (const [section, title] of [
     ['schedule', 'Pianificazione'],

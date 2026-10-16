@@ -50,6 +50,7 @@ it('says why a delicate item is delicate once it is taken, and shows its measure
   );
   await wrapper.get('[data-testid="item_old-kernels"]').trigger('change');
   expect(wrapper.get('[data-testid="risky_old-kernels"]').text()).toContain('kernel di riserva');
+  expect(wrapper.get('[data-testid="risky_old-kernels"] strong').text()).toBe('Attenzione');
   await wrapper.get('[data-testid="item_old-kernels"]').trigger('change');
   expect(wrapper.props('modelValue')).toEqual([]);
   await wrapper.get('[data-testid="item_cache:nas-file-manager:trash"]').trigger('change');
