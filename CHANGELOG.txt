@@ -2,6 +2,14 @@
 
 All notable changes to nas-cleanup-manager are documented in this file.
 
+## [Unreleased]
+
+### Security
+
+- The socket of the app answers the launcher only (root, the owner of the folder of the sockets, or
+  the app itself): another app of the NAS can no longer reach its API with headers it made up
+  (`launcher_only.rs`).
+
 ## [0.1.5]
 
 ### Changed

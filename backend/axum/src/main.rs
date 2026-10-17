@@ -1,6 +1,7 @@
 mod catalog;
 mod cleaner;
 mod launcher;
+mod launcher_only;
 mod schedule;
 mod scheduler;
 mod store;
@@ -460,7 +461,7 @@ async fn run(
         let cleaner = Arc::clone(&cleaner);
         async move { cleaner.declare_background().await }
     });
-    let result = axum::serve(listener, app)
+    let result = axum::serve(launcher_only::LauncherOnly::new(listener), app)
         .with_graceful_shutdown(shutdown_signal)
         .await;
     scheduler.abort();
