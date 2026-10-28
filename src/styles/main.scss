@@ -1,0 +1,57 @@
+@use '@valeriogc/nas-base-app/styles/_nas-theme.scss';
+@use '@valeriogc/nas-base-app/styles/partials/_reset.scss';
+@use '@valeriogc/nas-base-app/styles/_nas-apps.scss';
+@use '@valeriogc/nas-base-app/styles/_nas-layout.scss';
+@use '@valeriogc/nas-base-app/styles/_nas-buttons.scss';
+@use '@valeriogc/nas-base-app/styles/_nas-modal.scss';
+@use '@valeriogc/nas-base-app/styles/_nas-scrollbar.scss';
+@use '@valeriogc/nas-base-app/styles/_nas-switch.scss';
+@use '@valeriogc/nas-base-app/styles/_nas-number-stepper.scss';
+@use '@valeriogc/nas-base-app/styles/_nas-loading.scss';
+@use '@valeriogc/nas-base-app/styles/_nas-empty-state.scss';
+
+.page_header {
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: var(--nas-muted);
+  }
+}
+
+.muted {
+  color: var(--nas-muted);
+}
+
+.alert_warning {
+  --app-icon-size: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--tone-warning) 45%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--tone-warning) 10%, var(--nas-surface));
+  font-size: 0.875rem;
+  line-height: 1.45;
+
+  > .app_icon {
+    flex: none;
+    margin-top: 2px;
+  }
+
+  strong {
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  ul {
+    margin: 4px 0 0;
+    padding-left: 18px;
+    list-style: disc;
+  }
+}

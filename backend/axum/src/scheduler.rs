@@ -1,0 +1,184 @@
+//! Runs the scheduled cleanups. A single loop asks `systemd-analyze calendar` for the next run of
+//! each rule, which handles the NAS time zone and daylight saving. It sleeps until the first run
+//! for at most 15 minutes and wakes early when a rule changes. A run missed while the NAS was off
+//! or asleep is skipped, and so is one due while another cleanup is running.
+
+use crate::{
+    cleaner::{now_ms, Cleaner},
+    schedule::{Frequency, RuleSchedule},
+    store,
+};
+use std::{sync::Arc, time::Duration};
+use tokio::process::Command;
+
+/// Longest sleep between calendar reads, so clock and time zone changes are picked up.
+const MAX_REST: Duration = Duration::from_secs(15 * 60);
+
+/// Maximum delay before a due run counts as missed.
+const LATE_MS: i64 = 5 * 60 * 1000;
+
+const WEEKDAYS: [&str; 7] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const SHORTEST_MONTH: u8 = 28;
+
+/// systemd calendar expressions of a schedule. A day missing from the month runs on its last day.
+pub fn calendar(schedule: &RuleSchedule) -> Vec<String> {
+    let time = format!("{}:00", schedule.time);
+    match schedule.frequency {
+        Frequency::Daily => vec![format!("*-*-* {time}")],
+        Frequency::Weekly => {
+            let day = schedule
+                .weekday
+                .and_then(|day| WEEKDAYS.get(usize::from(day).wrapping_sub(1)))
+                .unwrap_or(&"Mon");
+            vec![format!("{day} *-*-* {time}")]
+        }
+        Frequency::Monthly => {
+            let day = schedule.day.unwrap_or(1);
+            if day <= SHORTEST_MONTH {
+                vec![format!("*-*-{day:02} {time}")]
+            } else if day == 31 {
+                vec![format!("*-*~01 {time}")]
+            } else {
+                // The 29th or 30th where the month has it, otherwise the last day of February.
+                vec![format!("*-*-{day:02} {time}"), format!("*-02~01 {time}")]
+            }
+        }
+        Frequency::Yearly => {
+            let (month, day) = (schedule.month.unwrap_or(1), schedule.day.unwrap_or(1));
+            if month == 2 && day == 29 {
+                vec![format!("*-02~01 {time}")]
+            } else {
+                vec![format!("*-{month:02}-{day:02} {time}")]
+            }
+        }
+    }
+}
+
+/// Next elapse of the expressions in Unix milliseconds.
+pub async fn next_elapse(expressions: &[String]) -> Option<i64> {
+    let output = Command::new("systemd-analyze")
+        .args(["calendar", "--iterations=1"])
+        .args(expressions)
+        .output()
+        .await
+        .ok()?;
+    parse_elapses(&String::from_utf8_lossy(&output.stdout))
+}
+
+/// Earliest UTC elapse in the systemd-analyze output. On a machine set to UTC only the next elapse
+/// line is printed, already in UTC.
+pub fn parse_elapses(text: &str) -> Option<i64> {
+    text.lines()
+        .filter_map(|line| {
+            let line = line.trim();
+            line.strip_prefix("(in UTC):")
+                .or_else(|| line.strip_prefix("Next elapse:"))
+        })
+        .filter_map(|moment| {
+            let mut parts = moment.split_whitespace().skip(1);
+            let (date, time) = (parts.next()?, parts.next()?);
+            (parts.next() == Some("UTC")).then(|| utc_milliseconds(date, time))?
+        })
+        .min()
+}
+
+/// Converts a UTC date and time to Unix milliseconds.
+pub fn utc_milliseconds(date: &str, time: &str) -> Option<i64> {
+    let mut date = date.split('-').map(str::parse::<i64>);
+    let (year, month, day) = (date.next()?.ok()?, date.next()?.ok()?, date.next()?.ok()?);
+    let mut time = time.split(':').map(str::parse::<i64>);
+    let (hours, minutes, seconds) = (time.next()?.ok()?, time.next()?.ok()?, time.next()?.ok()?);
+    // Days from the civil date, Howard Hinnant algorithm.
+    let year = if month <= 2 { year - 1 } else { year };
+    let era = year.div_euclid(400);
+    let of_era = year - era * 400;
+    let of_year = (153 * (month + if month > 2 { -3 } else { 9 }) + 2) / 5 + day - 1;
+    let of_cycle = of_era * 365 + of_era / 4 - of_era / 100 + of_year;
+    let days = era * 146_097 + of_cycle - 719_468;
+    Some(((days * 24 + hours) * 60 + minutes) * 60_000 + seconds * 1000)
+}
+
+/// Enabled rules with their schedule.
+async fn scheduled(cleaner: &Cleaner) -> Vec<(String, RuleSchedule)> {
+    store::rules(cleaner.pool())
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|rule| rule.enabled)
+        .map(|rule| (rule.id, rule.schedule))
+        .collect()
+}
+
+/// Recomputes the next run of a rule, cleared when the rule is disabled.
+pub async fn refresh(cleaner: &Cleaner, id: &str) {
+    let rule = scheduled(cleaner)
+        .await
+        .into_iter()
+        .find(|(rule, _)| rule == id);
+    let next = match rule {
+        Some((_, schedule)) => next_elapse(&calendar(&schedule)).await,
+        None => None,
+    };
+    cleaner.set_next(id, next);
+}
+
+async fn upcoming(cleaner: &Cleaner) -> Vec<(i64, String)> {
+    let rules = scheduled(cleaner).await;
+    let mut upcoming = Vec::with_capacity(rules.len());
+    for (id, schedule) in &rules {
+        let next = match cleaner.next_run(id) {
+            Some(next) => Some(next),
+            None => next_elapse(&calendar(schedule)).await,
+        };
+        cleaner.set_next(id, next);
+        if let Some(next) = next {
+            upcoming.push((next, id.clone()));
+        }
+    }
+    cleaner.keep_next(&rules.iter().map(|(id, _)| id.clone()).collect::<Vec<_>>());
+    upcoming
+}
+
+/// Starts the rules that are due, skipping those late by more than `LATE_MS`.
+pub async fn start_due(cleaner: &Arc<Cleaner>, upcoming: Vec<(i64, String)>, now: i64) {
+    for (at, id) in upcoming {
+        if at > now {
+            continue;
+        }
+        cleaner.set_next(&id, None);
+        if now - at > LATE_MS {
+            eprintln!("<4>the cleanup {id} at {at} was missed because the NAS was not awake");
+            continue;
+        }
+        let Ok(Some(rule)) = store::rule(cleaner.pool(), &id).await else {
+            continue;
+        };
+        if !cleaner.start(rule.items, Some(rule.name)) {
+            eprintln!("<4>the cleanup {id} was skipped because another one is running");
+        }
+    }
+}
+
+pub async fn run(cleaner: Arc<Cleaner>) {
+    loop {
+        let upcoming = upcoming(&cleaner).await;
+        let now = now_ms();
+        let first = upcoming.iter().map(|(at, _)| *at).min();
+        let rest = first.map_or(MAX_REST, |at| {
+            Duration::from_millis(at.saturating_sub(now).max(0) as u64).min(MAX_REST)
+        });
+        let woken = tokio::select! {
+            () = tokio::time::sleep(rest) => false,
+            () = cleaner.schedule_changed() => true,
+        };
+        let now = now_ms();
+        start_due(&cleaner, upcoming, now).await;
+        if !woken && first.is_none_or(|at| at > now) {
+            cleaner.forget_next();
+        }
+    }
+}
+
+#[cfg(test)]
+#[path = "../tests/unit/axum/scheduler.rs"]
+mod tests;
