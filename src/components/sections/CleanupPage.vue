@@ -38,7 +38,7 @@ const previewing = ref(false);
 const confirmOpen = ref(false);
 const progress = ref<Progress | null>(null);
 const outcome = ref<string | null>(null);
-  
+
 let timer: ReturnType<typeof setTimeout> | undefined;
 let loaded = false;
 

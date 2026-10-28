@@ -97,7 +97,7 @@ async function submit() {
     </form>
 
     <p v-if="error" class="app_error" role="alert">{{ error }}</p>
-    
+
     <template #footer>
       <button type="button" class="app_button" @click="open = false">{{ t.cancel }}</button>
       <button

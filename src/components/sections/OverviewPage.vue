@@ -21,7 +21,7 @@ const parts = computed(() => {
   if (!value) {
     return [];
   }
-  
+
   const counted = new Map(value.categories.map((category) => [category.id, category.bytes]));
   const others = [...counted.values()].reduce((sum, bytes) => sum + bytes, 0);
   const used = Math.max(0, value.total - value.free);

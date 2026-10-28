@@ -15,7 +15,7 @@ async function call<T>(path: string, init?: { method: string; body?: unknown }):
     headers: init?.body === undefined ? undefined : { 'Content-Type': 'application/json' },
     body: init?.body === undefined ? undefined : JSON.stringify(init.body),
   });
-  
+
   const text = await response.text();
   const body: unknown = text ? JSON.parse(text) : null;
   if (!response.ok) {

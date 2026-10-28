@@ -122,7 +122,7 @@ function size(id: string) {
           }}
         </span>
       </div>
-      
+
       <ul v-if="!closed.includes(group)" class="tree_items">
         <li
           v-for="entry in members"
