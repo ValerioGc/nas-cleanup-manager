@@ -10,6 +10,10 @@
 @use '@valeriogc/nas-base-app/styles/_nas-loading.scss';
 @use '@valeriogc/nas-base-app/styles/_nas-empty-state.scss';
 
+.app_switch {
+  position: relative;
+}
+
 .page_header {
   h1 {
     margin: 0;

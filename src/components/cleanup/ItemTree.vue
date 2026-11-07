@@ -186,6 +186,7 @@ function size(id: string) {
 <style scoped lang="scss">
 
 .item_tree {
+  position: relative;
   display: grid;
   gap: 10px;
   min-width: 0;

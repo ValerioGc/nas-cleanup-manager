@@ -67,3 +67,32 @@ test('the settings change the numbers of the cleanup', async ({ page }) => {
   await page.getByTestId('show_temporary').click();
   await expect(page.getByTestId('item_detail')).toContainText('14 giorni');
 });
+
+test('turning on an item at the end of the list scrolls only the list', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 560 });
+  await page.goto('/');
+  await page.getByTestId('section_cleanup').click();
+  const tree = page.getByRole('group', { name: 'Voci da pulire' });
+  await tree.evaluate((element) => element.scrollTo(0, element.scrollHeight));
+  expect(await tree.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+
+  for (const [role, name] of [
+    ['switch', 'Cestino di Explorer'],
+    ['checkbox', 'Cestini'],
+    ['switch', 'Miniature di Explorer'],
+    ['checkbox', 'Cache delle app'],
+  ] as const) {
+    const control = page.getByRole(role, { name, exact: true });
+    const before = await control.isChecked();
+    await page.locator('label', { has: control }).click();
+    await expect(control).toBeChecked({ checked: !before });
+    const scrolled = await tree.evaluate((list) =>
+      [document.scrollingElement, ...document.querySelectorAll('*')]
+        .filter((element) => element && element !== list && element.scrollTop > 0)
+        .map((element) => element?.className),
+    );
+    expect(scrolled).toEqual([]);
+    await expect(page.getByRole('heading', { level: 1 })).toBeInViewport();
+    await expect(page.getByTestId('cleanup_start')).toBeInViewport();
+  }
+});
