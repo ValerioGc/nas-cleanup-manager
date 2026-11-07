@@ -2,6 +2,13 @@
 
 All notable changes to nas-cleanup-manager are documented in this file.
 
+## [0.9.1]
+
+### Changed
+
+- Update dependabot config, add styles for app switch, and enhance e2e tests.
+- Clean up dependabot configuration and comments.
+
 ## [0.9.0]
 
 - Initial release of nas-cleanup-manager.
