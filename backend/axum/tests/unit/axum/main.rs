@@ -3,7 +3,7 @@ use crate::{
     schedule::{Frequency, RuleSchedule},
     test_support::{database, fake_launcher, FakeLauncher},
 };
-use axum::body::to_bytes;
+use axum::{body::to_bytes, http::header};
 use std::{fs, sync::atomic::AtomicU64};
 
 fn temp_dir() -> PathBuf {
