@@ -316,10 +316,16 @@ onBeforeUnmount(() => clearTimeout(timer));
 
 .item_detail {
   --app-icon-size: 18px;
+  display: flex;
+  flex-direction: column;
   align-self: start;
   max-height: 100%;
   padding: 18px 20px;
   overflow-y: auto;
+
+  > * {
+    flex-shrink: 0;
+  }
 
   h2 {
     display: flex;
@@ -367,10 +373,16 @@ onBeforeUnmount(() => clearTimeout(timer));
 .detail_entries {
   @extend %reset_list;
   display: grid;
+  flex: 0 1 auto;
+  align-content: start;
   gap: 2px;
-  max-height: 220px;
+  min-height: 96px;
   overflow: auto;
   font-size: 0.85rem;
+
+  .item_detail > & {
+    flex-shrink: 1;
+  }
 }
 
 .page_progress {
@@ -421,6 +433,10 @@ onBeforeUnmount(() => clearTimeout(timer));
 
   .item_detail {
     max-height: none;
+  }
+
+  .detail_entries {
+    max-height: 220px;
   }
 }
 

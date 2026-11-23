@@ -168,7 +168,7 @@ export const en: typeof it = {
     weekday: 'Day of the week',
     day: 'Day of the month',
     month: 'Month',
-    what: 'What to clean',
+    what: 'Selection',
     riskyIncluded: 'This cleanup includes delicate items.',
     toggle: 'Cleanup {name} on',
     run: 'Run {name} now',
@@ -205,6 +205,7 @@ export const en: typeof it = {
     journalMb: 'Largest journal size (MiB)',
     journalHint: 'Size the system journal is shrunk to.',
     notify: 'Notify at the end of a cleanup',
-    notifyHint: 'Notification of the NAS, without email.',
+    notifyHint:
+      'Shows a notification with the space freed at the end of every cleanup, scheduled ones included.',
   },
 };

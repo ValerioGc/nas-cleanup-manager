@@ -165,7 +165,7 @@ export const it = {
     weekday: 'Giorno della settimana',
     day: 'Giorno del mese',
     month: 'Mese',
-    what: 'Cosa pulire',
+    what: 'Selezione',
     riskyIncluded: 'Questa pulizia include voci delicate.',
     toggle: 'Pulizia {name} attiva',
     run: 'Avvia ora {name}',
@@ -202,6 +202,7 @@ export const it = {
     journalMb: 'Dimensione massima del journal (MiB)',
     journalHint: 'Dimensione a cui viene ridotto il journal di sistema.',
     notify: 'Notifica a fine pulizia',
-    notifyHint: 'Notifica del NAS, senza email.',
+    notifyHint:
+      'Al termine di ogni pulizia, anche pianificata, mostra una notifica con lo spazio liberato.',
   },
 };
