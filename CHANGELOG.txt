@@ -2,6 +2,12 @@
 
 All notable changes to nas-cleanup-manager are documented in this file.
 
+## [0.9.4]
+
+### Changed
+
+- Maintenance release.
+
 ## [0.9.3]
 
 ### Changed
